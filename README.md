@@ -2,11 +2,14 @@
 Chrome Plugin to Record Searches for Articles and Display Overlay Info
 
 
+
 ###Optional signin  
 * Google authentication using Hapi plugin **Bell** & **hapi-auth-cookie**
   * Signin enables saving data into database
       * basic user information saved in user object which is in database
   * If not signed in data still available but no data can be added (as in read/rejected/forwarded flags)
+
+  ![image](https://cloud.githubusercontent.com/assets/10906215/8267867/19889792-1768-11e5-9157-d6ca69e37344.png)
 
 
 ###Functionality
