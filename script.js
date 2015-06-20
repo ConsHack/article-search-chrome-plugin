@@ -1,35 +1,8 @@
-    method: ['GET', 'POST'],
-    path: '/login',
-    config: {
-        auth: {
-          mode: "optional",
-          strategy: "google"
-        },
-        handler: handlers.loginUser
-      }
-  },
-  
-
-      loginUser: function(request, reply) {
-      request.log('analytics request is being sent');
-      if(request.auth.isAuthenticated) {
-        mandrill.sendEmail(request);
-        request.auth.session.set(request.auth.credentials.profile);
-        reply.redirect('/my-account');
-      } else
-      {
-        reply.redirect("/").code(401);
-      }
-
-    },
-
 var Hapi = require('hapi'),
-    fs = require('fs'),
     Path = require('path'),
-    Good = require('good'),
     Bell = require('bell'),
     AuthCookie = require('hapi-auth-cookie'),
-    server = new Hapi.Server({debug: {request: ['error']}});
+    server = new Hapi.Server();
 
 server.connection({ port: process.env.PORT });
 
@@ -43,7 +16,7 @@ server.views({
 
 var authOptions = {
     provider: 'google',
-    password: 'google-encryption-password', //Password used for encryption
+    password: process.env.GOOGLE_ENCRYPTION_PASSWORD, //Password used for encryption
     clientId: process.env.GOOGLE_CLIENT_ID,//'YourAppId',
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,//'YourAppSecret',
     isSecure: false //means authentication can occur over http
@@ -51,19 +24,7 @@ var authOptions = {
 
 //register plugins with server
 server.register(
-  [{
-    register: Good,
-    options: {
-      reporters: [{
-        reporter: require('good-http'),
-        events: { request: '*' },
-        config: {
-          endpoint : 'http://localhost:8000/analytics',
-          threshold: 0
-        }
-      }]
-    }
-  },
+  [
   { register: Bell},
   { register: AuthCookie}
   ],
@@ -85,10 +46,26 @@ server.register(
     });
 
     server.auth.default('session');  //if no auth is specified it defaults to checking the session cookie
-    server.route(require('./routes'));
-
+    server.route({
+      method: ['GET', 'POST'],
+      path: '/login',
+      config: {
+        auth: {
+          mode: "optional",
+          strategy: "google"
+        },
+        handler: function(request, reply) {
+          request.log('analytics request is being sent');
+          if(request.auth.isAuthenticated) {
+            request.auth.session.set(request.auth.credentials.profile);
+            reply.redirect('/my-account');
+          } else {
+            reply.redirect("/").code(401);
+          }
+        }
+    }
+    });
   }
-
 );
 
 server.start(function () {
